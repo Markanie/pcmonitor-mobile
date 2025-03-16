@@ -15,11 +15,20 @@ export interface SensorNode {
   id: number;
 }
 
+export interface SoundDevice {
+  default: string;
+  device: string;
+  index: string;
+  name: string;
+  type: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class PcmonitorapiService {
-  private apiUrl = '/api/hardware/';
+  private hardwareApiUrl  = '/api/hardware/';
+  private soundApiUrl = '/api/sound/';
   
   constructor(private http: HttpClient) { }
   
@@ -28,7 +37,7 @@ export class PcmonitorapiService {
    * @returns Observable with the sensor data tree
    */
   getHardwareData(): Observable<SensorNode> {
-    return this.http.get<SensorNode>(this.apiUrl).pipe(
+    return this.http.get<SensorNode>(this.hardwareApiUrl ).pipe(
       catchError(error => {
         console.error('Error fetching hardware data:', error);
         return of({ Children: [], ImageURL: '', Max: '', Min: '', Text: 'Error', Value: '', id: 0 });
@@ -118,4 +127,63 @@ export class PcmonitorapiService {
     
     return undefined;
   }
+
+   /**
+   * Fetches sound device data from the API
+   * @returns Observable with an array of sound devices
+   */
+   getSoundDevices(): Observable<SoundDevice[]> {
+    return this.http.get<SoundDevice[]>(this.soundApiUrl).pipe(
+      catchError(error => {
+        console.error('Error fetching sound device data:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Gets a stream of sound device data that refreshes at the given interval
+   * @param refreshInterval Time in milliseconds between refreshes
+   * @returns Observable that emits updated sound device data at the specified interval
+   */
+  getSoundDevicesStream(refreshInterval: number = 5000): Observable<SoundDevice[]> {
+    return timer(0, refreshInterval).pipe(
+      switchMap(() => this.getSoundDevices()),
+      catchError(error => {
+        console.error('Error in sound device data stream:', error);
+        return of([]);
+      })
+    );
+  }
+
+  /**
+   * Filters sound devices by type (Playback or Recording)
+   * @param type The device type to filter by ('Playback' or 'Recording')
+   * @param devices The array of sound devices to filter
+   * @returns Array of sound devices matching the specified type
+   */
+  getSoundDevicesByType(type: string, devices: SoundDevice[]): SoundDevice[] {
+    return devices.filter(device => device.type === type);
+  }
+
+  /**
+   * Gets the default sound device for a specific type
+   * @param type The device type to find the default for ('Playback' or 'Recording')
+   * @param devices The array of sound devices to search in
+   * @returns The default sound device or undefined if not found
+   */
+  getDefaultSoundDevice(type: string, devices: SoundDevice[]): SoundDevice | undefined {
+    return devices.find(device => device.type === type && device.default === 'true');
+  }
+
+  /**
+   * Finds a sound device by its index
+   * @param index The device index to search for
+   * @param devices The array of sound devices to search in
+   * @returns The found sound device or undefined
+   */
+  findSoundDeviceByIndex(index: string, devices: SoundDevice[]): SoundDevice | undefined {
+    return devices.find(device => device.index === index);
+  }
+  
 }

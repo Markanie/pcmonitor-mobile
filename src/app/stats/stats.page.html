@@ -14,21 +14,18 @@
     </ion-toolbar>
   </ion-header>
 
-<ion-grid [fixed]="true">
-  <ion-row>
-    <ion-col size="12" size-xs="12" size-sm="6" size-md="4" size-lg="3" ><gauge></gauge></ion-col>
-    <ion-col size="12" size-xs="12" size-sm="6" size-md="4" size-lg="3"><gauge></gauge></ion-col>
-    <ion-col size="12" size-xs="12" size-sm="6" size-md="4" size-lg="3"><gauge></gauge></ion-col>
+<ion-grid class="fullheight center" >
+  <ion-row justify-content-center align-items-center style="height: 100%">
+    <ion-col size="12" size-xs="12" size-sm="6" size-md="4" size-lg="3"  *ngFor="let gauge of gauges">
+      <div class="gauge-card" align-items-center>
+        <h2>{{ gauge.title }}</h2>
+        <gauge #gaugeComponent class="gauge-component" [value]="getSensorValue(gauge.sensor)"></gauge>
+
+        <div class="gauge-value" *ngIf="gauge.sensor">
+         {{getSensorValue(gauge.sensor)}}
+        </div>
+      </div>
+    </ion-col>
   </ion-row>
-  <ion-row> <div *ngIf="hardwareData">
-    <h2>System Information</h2>
-    <p>Computer: {{ hardwareData.Text }}</p>
-    <!-- Example of displaying CPU temperature -->
-    <div *ngIf="cpuTemp">
-      <h3>CPU Temperature</h3>
-      <p>{{ cpuTemp.Text }}: {{ cpuTemp.Value }}</p>
-      <p>Max: {{ cpuTemp.Max }}</p>
-    </div>
-  </div></ion-row>
 </ion-grid>
 </ion-content>

@@ -1,4 +1,4 @@
-import { ElementRef, Component, OnInit } from '@angular/core';
+import { ElementRef, Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 
 export interface GaugePath {
   element?: SVGPathElement;
@@ -10,22 +10,34 @@ export interface GaugePath {
   colorFn?: (value: number) => string;
 }
 
+export interface GaugeConfig {
+  radius?: number;
+  dialStartAngle?: number;
+  dialEndAngle?: number;
+  color?: string;
+  colorFn?: (value: number) => string;
+}
+
 @Component({
   selector: 'gauge',
   templateUrl: './gauge.component.html',
   styleUrls: ['./gauge.component.scss'],
 })
-export class GaugeComponent  implements OnInit {
+export class GaugeComponent  implements OnInit, OnChanges {
   private SVG_NS = "http://www.w3.org/2000/svg";
   private svgContainer!: HTMLElement;
   private svgElement!: SVGElement;
   private svg_width = 500;
   private svg_height = 230;
+
+  @Input() config: GaugeConfig = {};
+  @Input() value: number = 0;
+
   private path: GaugePath = {
     radius: 45,
     dialStartAngle: 135,
     dialEndAngle: 45,
-    color: '#629'
+    color: '#129'
   }
   constructor(private el: ElementRef) { }
 
@@ -33,6 +45,13 @@ export class GaugeComponent  implements OnInit {
     this.svgContainer = this.el.nativeElement.querySelector('.gauge-container');
 
   }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['value'] && !changes['value'].firstChange && this.svgElement) {
+      this.updatePath(this.path, this.value);
+    }
+  }
+
   ngAfterViewInit(): void {
     this.svgElement = this.createSvgElement("svg", {
       "height": this.svg_height,
@@ -57,7 +76,7 @@ export class GaugeComponent  implements OnInit {
       path.gaugeSpanAngle = 360 - Math.abs(path.dialStartAngle - path.dialEndAngle);
       const valuePath = this.createSvgElement("path", {
         "class": "value",
-        fill: "none", stroke: "#166", "stroke-width": 6,
+        fill: "none", stroke: "#39ff14", "stroke-width": 6,
         d: this.createSvgArcPathString(path.radius, path.dialStartAngle , path.dialEndAngle )
       })
       path.element = valuePath;
