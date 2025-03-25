@@ -19,7 +19,7 @@
     <ion-col size="12" size-xs="12" size-sm="6" size-md="4" size-lg="3"  *ngFor="let gauge of gauges">
       <div class="gauge-card" align-items-center>
         <h2>{{ gauge.title }}</h2>
-        <gauge #gaugeComponent class="gauge-component" [value]="getSensorValue(gauge.sensor)"></gauge>
+        <gauge #gaugeComponent class="gauge-component" [value]="getSensorValue(gauge.sensor)" [gaugeData]="gauge.data" ></gauge>
 
         <div class="gauge-value" *ngIf="gauge.sensor">
          {{getSensorValue(gauge.sensor)}}

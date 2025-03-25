@@ -1,17 +1,22 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { GaugeComponent } from '../components/gauge/gauge.component';
+import { GaugeComponent, GaugeData  } from '../components/gauge/gauge.component';
 import { IonCol, IonGrid, IonRow, IonButtons, IonContent, IonHeader, IonTitle, IonToolbar, IonMenuButton } from '@ionic/angular/standalone';
 import { PcmonitorapiService, SensorNode } from '../pcmonitorapi.service';
 import { Subscription } from 'rxjs';
+
+
 
 interface GaugeConfig {
   id: string;
   title: string;
   sensorId: string;
   sensor: SensorNode | null;
+  data: GaugeData;
 }
+
+
 
 @Component({
   selector: 'app-stats',
@@ -22,12 +27,26 @@ interface GaugeConfig {
 })
 export class StatsPage implements OnInit, OnDestroy {
   hardwareData: SensorNode | null = null;
+  tempColors = ['#61ffb5', '#61ff81', '#76ff61', '#abff61', '#dfff61',
+    '#ffea62', '#ffb561', '#ff8161', '#ff6176'];
   gauges: GaugeConfig[] = [
-    { id: 'cpu-load', title: 'CPU Load', sensorId: '/amdcpu/0/load/1', sensor: null },
-    { id: 'cpu-temp', title: 'CPU Temperature', sensorId: '/amdcpu/0/temperature/2', sensor: null },
-    { id: 'gpu-load', title: 'GPU Load', sensorId: '/gpu-nvidia/0/load/0', sensor: null },
-    { id: 'gpu-temp', title: 'GPU Temperature', sensorId: '/gpu-nvidia/0/temperature/0', sensor: null },
-    { id: 'ram-usage', title: 'RAM Usage', sensorId: '/ram/load/0', sensor: null }
+    { id: 'cpu-load', title: 'CPU Load', sensorId: '/amdcpu/0/load/1', sensor: null,
+      data:{color: '#00F0ff', colorRange: null}
+    },
+    { id: 'cpu-temp', title: 'CPU Temperature', sensorId: '/amdcpu/0/temperature/2', sensor: null, 
+      data:{
+        color: null,
+        colorRange: {min: 30, max: 80, colors: this.tempColors}  
+      }
+     },
+    { id: 'gpu-load', title: 'GPU Load', sensorId: '/gpu-nvidia/0/load/0', sensor: null, data:{color: '#EFAFEB', colorRange: null}},
+    { id: 'gpu-temp', title: 'GPU Temperature', sensorId: '/gpu-nvidia/0/temperature/0', sensor: null,
+      data:{
+        color: null,  
+        colorRange: {min: 30, max: 80, colors: this.tempColors}  
+      }
+    },
+    { id: 'ram-usage', title: 'RAM Usage', sensorId: '/ram/load/0', sensor: null,  data:{color: '#FF00FF', colorRange: null}}
   ];
   
   private subscription: Subscription = new Subscription();
@@ -61,4 +80,7 @@ export class StatsPage implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
   }
+
+
+
 }

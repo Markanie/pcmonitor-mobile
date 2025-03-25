@@ -6,16 +6,21 @@ export interface GaugePath {
   dialStartAngle: number; //135;
   dialEndAngle: number; //45;
   gaugeSpanAngle?: number; //360 - Math.abs(this.dialStartAngle - this.dialEndAngle);
-  color: string;
+  minVal?: number,
+  maxVal?: number,
+  color?: string;
   colorFn?: (value: number) => string;
 }
 
-export interface GaugeConfig {
-  radius?: number;
-  dialStartAngle?: number;
-  dialEndAngle?: number;
-  color?: string;
-  colorFn?: (value: number) => string;
+interface ColorRange {
+  min: number;
+  max: number;
+  colors: string[];
+}
+
+export interface GaugeData {
+  color: string | null;
+  colorRange: ColorRange | null;
 }
 
 @Component({
@@ -29,26 +34,38 @@ export class GaugeComponent  implements OnInit, OnChanges {
   private svgElement!: SVGElement;
   private svg_width = 500;
   private svg_height = 230;
-
-  @Input() config: GaugeConfig = {};
+  private color = '';
   @Input() value: number = 0;
+
+  @Input() gaugeData: GaugeData = {
+    color: '',  
+    colorRange: null
+  }
 
   private path: GaugePath = {
     radius: 45,
     dialStartAngle: 135,
     dialEndAngle: 45,
-    color: '#129'
+    color: '#61ffb5'
   }
   constructor(private el: ElementRef) { }
 
   ngOnInit(): void {
     this.svgContainer = this.el.nativeElement.querySelector('.gauge-container');
-
+    if(this.gaugeData.color){
+      this.color = this.gaugeData.color;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['value'] && !changes['value'].firstChange && this.svgElement) {
-      this.updatePath(this.path, this.value);
+      //console.log(changes['value'])
+      if(this.gaugeData.colorRange){
+        
+        this.color = this.colorFn(changes['value'].currentValue, this.gaugeData.colorRange)
+        console.log(this.gaugeData.colorRange, this.color)
+      }
+      this.updatePath(this.path, changes['value'].currentValue);
     }
   }
 
@@ -62,25 +79,36 @@ export class GaugeComponent  implements OnInit, OnChanges {
 
     this.svgElement.appendChild(  this.createSvgElement("path", {
       "class": "dail",
-      fill: "none", stroke: "#666", "stroke-width": 3,
+      fill: "none", stroke: "#666", "stroke-width": 4,
       d: this.createSvgArcPathString(this.path.radius, 135, 45 )
     }));
 
-    this.updatePath(this.path, 50)
+   // this.updatePath(this.path, 0)
 
     this.svgContainer.appendChild(this.svgElement);
   }
 
   private updatePath(path: GaugePath, value: number): void {
+   
+    let stroke = "#FFFFFF"
+      
+
+      stroke = this.color
+    
     if(!path.element){
       path.gaugeSpanAngle = 360 - Math.abs(path.dialStartAngle - path.dialEndAngle);
+
       const valuePath = this.createSvgElement("path", {
         "class": "value",
-        fill: "none", stroke: "#39ff14", "stroke-width": 6,
+        "stroke-linecap": "round",
+        fill: "none", stroke: stroke, "stroke-width": 9,
         d: this.createSvgArcPathString(path.radius, path.dialStartAngle , path.dialEndAngle )
       })
       path.element = valuePath;
       this.svgElement.appendChild(valuePath);
+    }
+    else {
+      path.element.setAttribute('stroke', stroke);
     }
     this.setSvgArcPathString(this.path, value)
   }
@@ -153,5 +181,22 @@ export class GaugeComponent  implements OnInit, OnChanges {
   getAngle(percentage: number, gaugeSpanAngle: number): number {
     return percentage * gaugeSpanAngle / 100;
   }
+
+  colorFn(value: number, colorRange: ColorRange | null): string {                
+    if (colorRange){
+      const {min, max, colors} = colorRange;
+      let percentage = (value-min) / (max - min);
+
+
+    // Clamp percentage between 0 and 1
+      percentage = Math.max(0, Math.min(1, percentage));
+    // Calculate index in colors array
+      const index = Math.min(Math.floor(percentage * colors.length), colors.length - 1);
+    //console.log(min, max, percentage, index, colors[index]);
+    return colors[index];
+    } else {
+      return '#FFFFFF';
+    }
+  }  
 
 }
