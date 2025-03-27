@@ -38,7 +38,7 @@ export class StatsPage implements OnInit, OnDestroy {
         color: null,
         colorRange: {min: 30, max: 80, colors: this.tempColors}  
       }
-     },
+    },
     { id: 'gpu-load', title: 'GPU Load', sensorId: '/gpu-nvidia/0/load/0', sensor: null, data:{color: '#EFAFEB', colorRange: null}},
     { id: 'gpu-temp', title: 'GPU Temperature', sensorId: '/gpu-nvidia/0/temperature/0', sensor: null,
       data:{

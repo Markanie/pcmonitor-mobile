@@ -35,8 +35,9 @@ export class GaugeComponent  implements OnInit, OnChanges {
   private svg_width = 500;
   private svg_height = 230;
   private color = '';
+  private animationFrameId: number | undefined;
   @Input() value: number = 0;
-
+  private lastValue: number = 0;
   @Input() gaugeData: GaugeData = {
     color: '',  
     colorRange: null
@@ -61,11 +62,9 @@ export class GaugeComponent  implements OnInit, OnChanges {
     if (changes['value'] && !changes['value'].firstChange && this.svgElement) {
       //console.log(changes['value'])
       if(this.gaugeData.colorRange){
-        
         this.color = this.colorFn(changes['value'].currentValue, this.gaugeData.colorRange)
-        console.log(this.gaugeData.colorRange, this.color)
       }
-      this.updatePath(this.path, changes['value'].currentValue);
+      this.animate(changes['value'].currentValue, 1);
     }
   }
 
@@ -91,9 +90,7 @@ export class GaugeComponent  implements OnInit, OnChanges {
   private updatePath(path: GaugePath, value: number): void {
    
     let stroke = "#FFFFFF"
-      
-
-      stroke = this.color
+    stroke = this.color
     
     if(!path.element){
       path.gaugeSpanAngle = 360 - Math.abs(path.dialStartAngle - path.dialEndAngle);
@@ -186,8 +183,6 @@ export class GaugeComponent  implements OnInit, OnChanges {
     if (colorRange){
       const {min, max, colors} = colorRange;
       let percentage = (value-min) / (max - min);
-
-
     // Clamp percentage between 0 and 1
       percentage = Math.max(0, Math.min(1, percentage));
     // Calculate index in colors array
@@ -198,5 +193,48 @@ export class GaugeComponent  implements OnInit, OnChanges {
       return '#FFFFFF';
     }
   }  
+
+  animate(targetValue: number, duration: number = 1): void {
+    // Cancel any ongoing animation
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+  
+    const startValue = this.lastValue;
+    const change = targetValue - startValue;
+    const startTime = performance.now();
+    const animationDuration = duration * 1000; // Convert to milliseconds
+
+    const easeInOutCubic = (pos: number): number => {
+      if ((pos /= 0.5) < 1) return 0.5 * Math.pow(pos, 3);
+      return 0.5 * (Math.pow((pos - 2), 3) + 2);
+    };
+    
+    const animateStep = (currentTime: number): void => {
+      const elapsedTime = currentTime - startTime;
+      const progress = Math.min(elapsedTime / animationDuration, 1); // Clamp to 1
+      // Simple linear interpolation
+      const newValue = change * easeInOutCubic(progress) + startValue;
+      
+      // Update the gauge with the intermediate value
+      this.value = newValue;
+      if (this.gaugeData.colorRange) {
+        this.color = this.colorFn(newValue, this.gaugeData.colorRange);
+      }
+      this.updatePath(this.path, newValue);
+      
+      if (progress < 1) {
+        // Continue animation
+        this.animationFrameId = requestAnimationFrame(animateStep);
+      } else {
+        // Animation complete
+        this.animationFrameId = undefined;
+        this.lastValue = this.value;
+      }
+    };
+    
+    // Start the animation
+    this.animationFrameId = requestAnimationFrame(animateStep);
+  }
 
 }
