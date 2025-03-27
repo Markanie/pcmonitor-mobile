@@ -209,6 +209,21 @@ export class GaugeComponent  implements OnInit, OnChanges {
       if ((pos /= 0.5) < 1) return 0.5 * Math.pow(pos, 3);
       return 0.5 * (Math.pow((pos - 2), 3) + 2);
     };
+
+      // Create or get text element for displaying value
+  let textElement = this.svgElement.querySelector('.value-text') as SVGTextElement;
+  if (!textElement) {
+    textElement = this.createSvgElement("text", {
+      "class": "value-text",
+      "x": "50",
+      "y": "50",
+      "text-anchor": "middle",
+      "font-size": "15",
+      "font-weight": "bold",
+      "fill":"rgb(184, 184, 184)"
+    });
+    this.svgElement.appendChild(textElement);
+  }
     
     const animateStep = (currentTime: number): void => {
       const elapsedTime = currentTime - startTime;
@@ -221,7 +236,13 @@ export class GaugeComponent  implements OnInit, OnChanges {
       if (this.gaugeData.colorRange) {
         this.color = this.colorFn(newValue, this.gaugeData.colorRange);
       }
-      this.updatePath(this.path, newValue);
+      //this.updatePath(this.path, newValue);
+     // this.updateText(this.text, newValue);
+
+      const percentValue = this.valueToPercentage(newValue);
+      this.updatePath(this.path, percentValue);
+
+      textElement.textContent = this.formatDisplayValue(newValue);
       
       if (progress < 1) {
         // Continue animation
@@ -236,5 +257,22 @@ export class GaugeComponent  implements OnInit, OnChanges {
     // Start the animation
     this.animationFrameId = requestAnimationFrame(animateStep);
   }
+
+  private formatDisplayValue(value: number): string {
+    // You can customize this format as needed
+    return value.toFixed(1);
+  }
+
+private valueToPercentage(value: number): number {
+  const minVal = this.gaugeData.colorRange?.min ?? 0;
+  const maxVal = this.gaugeData.colorRange?.max ?? 100;
+  return ((value - minVal) / (maxVal - minVal)) * 100;
+}
+
+private clampValue(value: number): number {
+  const minVal = this.gaugeData.colorRange?.min ?? 0;
+  const maxVal = this.gaugeData.colorRange?.max ?? 100;
+  return Math.max(minVal, Math.min(maxVal, value));
+}
 
 }
